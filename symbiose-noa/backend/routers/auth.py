@@ -32,7 +32,10 @@ async def _send_magic_link_email(to_email: str, magic_link: str) -> None:
     async with httpx.AsyncClient() as client:
         res = await client.post(
             "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+            headers={
+                "Authorization": f"Bearer {settings.resend_api_key}",
+                "User-Agent": "python-httpx/0.27.0",
+            },
             json={
                 "from": settings.resend_from_email,
                 "to": to_email,
