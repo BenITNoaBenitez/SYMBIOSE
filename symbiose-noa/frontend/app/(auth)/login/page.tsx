@@ -1,7 +1,36 @@
 "use client"
-import { signIn } from "next-auth/react"
+import { useState } from "react"
+
+type State = "idle" | "loading" | "sent" | "error"
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [state, setState] = useState<State>("idle")
+  const [error, setError] = useState("")
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) return
+    setState("loading")
+    setError("")
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/magic-link/request`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        }
+      )
+      if (!res.ok) throw new Error()
+      setState("sent")
+    } catch {
+      setError("Une erreur est survenue. Réessayez.")
+      setState("error")
+    }
+  }
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -20,26 +49,67 @@ export default function LoginPage() {
         width: "100%",
       }}>
         <div style={{ fontSize: 32, marginBottom: 8 }}>🌿</div>
-        <h1 style={{ fontSize: 22, fontWeight: 500, marginBottom: 4, margin: "0 0 4px" }}>NOA</h1>
-        <p style={{ color: "#888", fontSize: 14, margin: "0 0 32px" }}>
-          Symbiose Paysage
-        </p>
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/chat" })}
-          style={{
-            width: "100%",
-            padding: "12px 24px",
-            background: "#1D9E75",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: "pointer",
-          }}
-        >
-          Se connecter avec Google
-        </button>
+        <h1 style={{ fontSize: 22, fontWeight: 500, margin: "0 0 4px" }}>NOA</h1>
+        <p style={{ color: "#888", fontSize: 14, margin: "0 0 32px" }}>Symbiose Paysage</p>
+
+        {state === "sent" ? (
+          <div>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>📬</div>
+            <p style={{ fontWeight: 500, margin: "0 0 8px" }}>Vérifiez votre boîte mail</p>
+            <p style={{ color: "#888", fontSize: 13, margin: "0 0 24px" }}>
+              Un lien de connexion a été envoyé à<br />
+              <strong>{email}</strong>
+            </p>
+            <button
+              onClick={() => { setState("idle"); setEmail("") }}
+              style={{ color: "#1D9E75", background: "none", border: "none", cursor: "pointer", fontSize: 13 }}
+            >
+              Utiliser un autre email
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="votre@email.fr"
+              required
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                fontSize: 14,
+                marginBottom: 12,
+                boxSizing: "border-box",
+                outline: "none",
+              }}
+            />
+            {error && (
+              <p style={{ color: "#e53e3e", fontSize: 13, margin: "0 0 12px" }}>{error}</p>
+            )}
+            <button
+              type="submit"
+              disabled={state === "loading"}
+              style={{
+                width: "100%",
+                padding: "12px 24px",
+                background: "#1D9E75",
+                color: "white",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 500,
+                cursor: state === "loading" ? "not-allowed" : "pointer",
+                opacity: state === "loading" ? 0.7 : 1,
+              }}
+            >
+              {state === "loading" ? "Envoi en cours..." : "Recevoir un lien de connexion"}
+            </button>
+          </form>
+        )}
+
         <p style={{ color: "#aaa", fontSize: 11, margin: "24px 0 0" }}>
           Accès réservé aux collaborateurs Symbiose Paysage
         </p>

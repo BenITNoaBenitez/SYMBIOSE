@@ -1,40 +1,42 @@
 import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
+import Credentials from "next-auth/providers/credentials"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    Credentials({
+      credentials: {
+        token: { type: "text" },
+        email: { type: "email" },
+      },
+      async authorize({ token, email }) {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/auth/magic-link/verify`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token, email }),
+            }
+          )
+          if (!res.ok) return null
+          const data = await res.json()
+          return {
+            id: email as string,
+            email: email as string,
+            backendToken: data.access_token,
+            role: data.role,
+          }
+        } catch {
+          return null
+        }
+      },
     }),
   ],
   pages: {
     signIn: "/login",
   },
+  trustHost: true,
   callbacks: {
-    async signIn({ user }) {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name,
-              google_id: user.id,
-            }),
-          }
-        )
-        if (!res.ok) return false
-        const data = await res.json()
-        ;(user as any).backendToken = data.access_token
-        ;(user as any).role = data.role
-        return true
-      } catch {
-        return false
-      }
-    },
     async jwt({ token, user }) {
       if (user) {
         token.backendToken = (user as any).backendToken

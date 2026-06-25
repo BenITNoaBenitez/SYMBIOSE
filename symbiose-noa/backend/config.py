@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     langfuse_public_key: str
     langfuse_host: str = "http://langfuse-server:3000"
 
+    # Magic Link — Resend
+    resend_api_key: str
+    resend_from_email: str = "NOA <noa@symbiose-paysage.fr>"
+    app_url: str = "http://localhost:3000"
+
     # Daytona (optionnel)
     daytona_api_key: Optional[str] = None
 
