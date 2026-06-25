@@ -1,0 +1,25 @@
+# Environnement — ne jamais committer les secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Next.js
+symbiose-noa/frontend/.next/
+symbiose-noa/frontend/node_modules/
+symbiose-noa/frontend/out/
+
+# Docker volumes / data
+postgres_data/
+langfuse_postgres_data/
+
+# OS
+.DS_Store
+Thumbs.db
